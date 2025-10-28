@@ -1,0 +1,115 @@
+---
+# Analysis Profiles for MalwareAnalyzer Pro
+
+profiles:
+  # Quick Scan Profile
+  quick_scan:
+    name: "Quick Scan"
+    description: "Fast basic analysis with minimal overhead"
+    settings:
+      timeout: 60
+      memory_dump: false
+      dump_child_processes: false
+      network_capture: false
+      virustotal_upload: true
+      detail_level: "Basic"
+      procmon_enabled: false
+      etw_enabled: true
+      
+  # Standard Analysis Profile  
+  standard_analysis:
+    name: "Standard Analysis"
+    description: "Balanced analysis with moderate detail"
+    settings:
+      timeout: 300
+      memory_dump: true
+      dump_child_processes: true
+      dump_all_children: true
+      network_capture: true
+      virustotal_upload: true
+      virustotal_auto_upload: true
+      detail_level: "Standard"
+      procmon_enabled: true
+      etw_enabled: true
+      pcap_enabled: true
+      pcap_ring_buffer_mb: 500
+      
+  # Deep Analysis Profile
+  deep_analysis:
+    name: "Deep Analysis"
+    description: "Comprehensive analysis with all features enabled"
+    settings:
+      timeout: 600
+      memory_dump: true
+      dump_child_processes: true
+      dump_all_children: true
+      network_capture: true
+      virustotal_upload: true
+      virustotal_auto_upload: true
+      virustotal_wait_for_results: true
+      detail_level: "Detailed"
+      procmon_enabled: true
+      etw_enabled: true
+      pcap_enabled: true
+      pcap_ring_buffer_mb: 500
+      unpack_samples: true
+      extract_strings: true
+      decompile_code: true
+      yara_rules: true
+      sigma_rules: true
+      
+  # Ransomware Analysis Profile
+  ransomware_analysis:
+    name: "Ransomware Analysis"
+    description: "Specialized profile for ransomware samples"
+    settings:
+      timeout: 900
+      memory_dump: true
+      dump_child_processes: true
+      dump_all_children: true
+      network_capture: true
+      file_system_monitoring: "Aggressive"
+      crypto_api_monitoring: true
+      shadow_copy_monitoring: true
+      backup_files_before_execution: true
+      virustotal_upload: true
+      virustotal_auto_upload: true
+      procmon_enabled: true
+      etw_enabled: true
+      pcap_enabled: true
+      
+  # Network-focused Analysis
+  network_analysis:
+    name: "Network Analysis"
+    description: "Focus on network behavior and C2 communication"
+    settings:
+      timeout: 300
+      memory_dump: false
+      dump_child_processes: false
+      network_capture: true
+      pcap_enabled: true
+      pcap_ring_buffer_mb: 1000
+      dns_monitoring: true
+      http_monitoring: true
+      virustotal_upload: true
+      detail_level: "Network"
+      
+# Default settings
+default:
+  analysis:
+    timeout: 300
+    vt_scan: true
+    dump_all_children: true
+    pcap: true
+  sandbox:
+    provider: hyperv
+    vm: Win11_Analysis
+    snapshot: clean_2025-10
+    default_switch: true
+    use_default_switch: true
+    enable_guest_services: true
+    powershell_direct: true
+  output:
+    dir: C:\MalwareAnalyzer\Results
+    format: html
+    compress: true

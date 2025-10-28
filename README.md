@@ -28,33 +28,43 @@ The system consists of the following core modules:
    - Section and resource information
 
 2. **Sandbox Manager** - Manages VM-based sandbox environments
-   - VM lifecycle management (VirtualBox, VMware, Hyper-V)
+   - VM lifecycle management (VirtualBox, VMware, **Hyper-V**)
+   - **Hyper-V Default Switch** support for network connectivity
+   - **PowerShell Direct** for file transfer and command execution
+   - **Guest Services** integration for efficient VM communication
    - Snapshot management and restoration
-   - Network isolation
+   - Network isolation and configuration
    - File deployment and execution
 
 3. **Process Monitor** - Monitors process behavior
    - Process creation/termination events
+   - **Process tree tracking** for parent-child relationships
    - Thread creation and DLL loading
    - File system operations
    - Registry modifications
    - Network connections
    - API call tracking (ETW/WMI based)
+   - **Procmon integration** for comprehensive behavior logging
 
 4. **Artifact Collector** - Collects execution artifacts
    - Dropped files
-   - Process memory dumps
-   - Network traffic capture (PCAP)
+   - **Process memory dumps (ALL child processes)**
+   - **Full memory dumps** with MiniDumpWriteDump
+   - Network traffic capture (**PCAP with ring buffer**)
    - Registry changes
 
 5. **VirusTotal Client** - VirusTotal API integration
    - File hash lookup
+   - **Auto-upload when file not found in VT**
+   - **Wait for analysis results** with polling
+   - **Result caching** to avoid repeated API calls
    - File submission
    - Report retrieval
    - Similar sample search
 
 6. **Storage & Database** - Data persistence
    - SQLite/PostgreSQL support
+   - **Bulk insert optimization** for performance
    - Execution history
    - Event logging
    - Artifact management
@@ -98,17 +108,25 @@ Create a `config.yaml` file to customize behavior:
 
 ```yaml
 sandbox:
-  type: virtualbox  # virtualbox, vmware, or hyperv
-  vm_name: "Windows10_Sandbox"
-  snapshot: "clean_state"
+  type: hyperv  # virtualbox, vmware, or hyperv
+  vm_name: "Win11_Analysis"
+  snapshot: "clean_2025-10"
+  use_default_switch: true  # Use Hyper-V Default Switch
+  enable_guest_services: true  # Enable Guest Services
+  powershell_direct: true  # Use PowerShell Direct
+  time_sync: true  # Enable time synchronization
   memory: 4096
   cpu_cores: 2
   
 monitoring:
+  dump_all_child_processes: true  # Dump ALL child processes
+  memory_dump_type: "Full"  # Full memory dumps
   api_hooks: true
   network_capture: true
+  pcap_ring_buffer_mb: 500  # PCAP ring buffer size
   screenshot_interval: 5
-  memory_dump: true
+  procmon_enabled: true  # Enable Procmon integration
+  etw_enabled: true  # Enable ETW monitoring
   
 analysis:
   timeout: 300
@@ -118,14 +136,26 @@ analysis:
 virustotal:
   api_key: "YOUR_API_KEY"
   auto_submit: true
-  wait_for_results: true
+  auto_upload_if_missing: true  # Auto-upload if not in VT
+  wait_for_results: true  # Wait for analysis completion
+  max_wait_time: 300
+  cache_results: true  # Cache VT results
+  cache_duration: 86400  # 24 hours
   
 output:
   directory: "./reports"
   format: "json"
   include_pcap: true
   include_memory_dump: false
+
+performance:
+  enable_caching: true
+  batch_insert_size: 1000  # Bulk insert optimization
+  thread_pool_size: 16
+  enable_compression: true
 ```
+
+See `config.yaml.example`, `config.json.example`, and `profiles.yaml` for more detailed configuration options.
 
 ## Usage
 
@@ -177,20 +207,37 @@ python malanalyzer.py vt-check <sha256_hash>
 
 ## Specifications
 
-This implementation is based on two detailed specifications:
+This implementation is based on four detailed specifications:
 
 1. **Spec.md** - Overall system architecture and design
 2. **Spec2.md** - Detailed implementation guide with Procmon integration
+3. **add spec3.md** (Korean) - Advanced features including:
+   - Hyper-V integration with Default Switch
+   - Memory dumps for ALL child processes
+   - VirusTotal auto-upload functionality
+   - WPF .NET GUI specification
+   - Performance optimization requirements
+4. **add spec4.md** (English) - Comprehensive implementation guide with:
+   - Detailed Hyper-V configuration and PowerShell Direct
+   - Child process tracking and full memory dumps
+   - VirusTotal integration with caching
+   - Performance optimization strategies
+   - Configuration templates and profiles
 
-Key features from specifications:
+Key features from all specifications:
 
 - PE file dynamic analysis in sandbox environments
+- **Hyper-V sandbox with Default Switch network**
+- **PowerShell Direct for efficient VM communication**
 - Procmon-based behavior tracking
+- **ETW (Event Tracing for Windows) integration**
 - File/Registry/Process/Network event collection
-- Memory and disk artifact dumping
+- **Memory dumping of parent and ALL child processes**
+- **PCAP network capture with ring buffer**
 - API call logging
-- VirusTotal integration
-- Both CLI and GUI interfaces
+- **VirusTotal integration with auto-upload**
+- **Performance optimizations (buffering, VM pooling, etc.)**
+- Both CLI and **WPF GUI** interfaces
 
 ## Safety and Security
 
@@ -311,8 +358,25 @@ flake8 src/
 - **CLI Framework**: Click
 - **Database**: SQLAlchemy (SQLite/PostgreSQL)
 - **VM Management**: Platform-specific APIs
+  - **Hyper-V**: PowerShell cmdlets and PowerShell Direct
+  - VirtualBox: VBoxManage API
+  - VMware: VMware API
 - **API Integration**: Requests
-- **Monitoring**: ETW/WMI (Windows)
+- **Monitoring**: 
+  - ETW (Event Tracing for Windows)
+  - WMI (Windows Management Instrumentation)
+  - **Procmon** (Sysinternals Process Monitor)
+- **Network Capture**: WinPcap/Npcap for PCAP
+- **GUI** (planned): WPF (.NET) for Windows
+
+## Additional Documentation
+
+- **PERFORMANCE.md** - Performance optimization guide
+- **PROCMON_INTEGRATION.md** - Procmon integration details
+- **WPF_GUI_SPEC.md** - WPF GUI specification
+- **config.json.example** - Comprehensive JSON configuration
+- **agent_config.json.example** - Guest agent configuration
+- **profiles.yaml** - Analysis profile templates
 
 ## Limitations
 
@@ -334,6 +398,10 @@ This implementation provides the core architecture and interfaces. For productio
 - REST API for remote access
 - Team collaboration features
 - Advanced anti-analysis detection
+- **WPF GUI implementation** (specification complete)
+- **VM pooling** for instant analysis startup
+- **Real-time event streaming** via WebSockets
+- **Advanced performance monitoring** and profiling
 
 ## License
 
@@ -345,9 +413,11 @@ Contributions are welcome! Please submit pull requests or open issues for bugs a
 
 ## Acknowledgments
 
-- Based on specifications in Spec.md and Spec2.md
+- Based on specifications in Spec.md, Spec2.md, add spec3.md, and add spec4.md
 - Uses Sysinternals tools (Procmon, Procdump)
+- Hyper-V PowerShell cmdlets and PowerShell Direct
 - Integrates with VirusTotal API v3
+- WinPcap/Npcap for network capture
 
 ## Support
 

@@ -1,0 +1,245 @@
+{
+  "PEAnalyzer": {
+    "HyperV": {
+      "VMName": "Win11_Analysis",
+      "VMPath": "C:\\VMs\\Analysis",
+      "VHDTemplatePath": "C:\\VMs\\Templates\\Windows11_Clean.vhdx",
+      "Snapshot": "clean_2025-10",
+      "Memory": 4096,
+      "ProcessorCount": 2,
+      "NetworkSwitch": "Default Switch",
+      "UseDefaultSwitch": true,
+      "EnableNestedVirtualization": false,
+      "EnableGuestServices": true,
+      "UsePowerShellDirect": true,
+      "TimeSync": true,
+      "AutoStartVM": true,
+      "VMPoolSize": 3
+    },
+    "Sandbox": {
+      "Provider": "HyperV",
+      "VmName": "Win11_Analysis",
+      "Snapshot": "clean_2025-10",
+      "UseDefaultSwitch": true,
+      "GuestServices": {
+        "Enable": true,
+        "Transport": "PowerShellDirect"
+      },
+      "TimeSync": true,
+      "MaxRunSeconds": 300,
+      "KillOnTimeout": true
+    },
+    "Monitoring": {
+      "CaptureAllChildProcesses": true,
+      "MaxProcessTreeDepth": 10,
+      "MemoryDumpOptions": {
+        "DumpType": "Full",
+        "CompressOutput": true,
+        "MaxDumpSize": 2147483648,
+        "IncludeChildProcesses": true,
+        "AllChildProcesses": true,
+        "DumpOnProcessExit": true,
+        "DumpInterval": 30,
+        "MinLifetimeMs": 3000,
+        "MaxConcurrentDumps": 2,
+        "OutputDirectory": "D:\\agent\\dumps"
+      },
+      "Procmon": {
+        "Path": "C:\\Tools\\Procmon\\Procmon64.exe",
+        "AcceptEula": true,
+        "DropFilteredEvents": true,
+        "BackingFileDirectory": "D:\\agent\\logs\\pml",
+        "LoadConfig": "C:\\Tools\\Procmon\\profile.pmc"
+      },
+      "ETW": {
+        "Enable": true
+      },
+      "ETWProviders": [
+        {
+          "Name": "Microsoft-Windows-Kernel-Process",
+          "Keywords": "0xFFFFFFFFFFFFFFFF",
+          "Level": "Verbose"
+        },
+        {
+          "Name": "Microsoft-Windows-Kernel-File",
+          "Keywords": "0xFFFFFFFFFFFFFFFF",
+          "Level": "Informational"
+        },
+        {
+          "Name": "Microsoft-Windows-Kernel-Registry",
+          "Keywords": "0xFFFFFFFFFFFFFFFF",
+          "Level": "Informational"
+        },
+        {
+          "Name": "Microsoft-Windows-Kernel-Network",
+          "Keywords": "0xFFFFFFFFFFFFFFFF",
+          "Level": "Informational"
+        }
+      ],
+      "APIHooks": {
+        "Enabled": true,
+        "TargetDLLs": [
+          "kernel32.dll",
+          "ntdll.dll",
+          "advapi32.dll",
+          "ws2_32.dll",
+          "wininet.dll"
+        ],
+        "MaxHookCount": 10000
+      },
+      "Pcap": {
+        "Enable": true,
+        "RingSizeMB": 500,
+        "OutputDirectory": "D:\\agent\\pcap",
+        "Adapter": "BestMatch",
+        "Output": "D:\\agent\\pcap\\capture.pcap"
+      }
+    },
+    "Collection": {
+      "Procmon": {
+        "Path": "C:\\Tools\\Procmon\\Procmon64.exe",
+        "AcceptEula": true,
+        "DropFilteredEvents": true,
+        "BackingFileDirectory": "D:\\agent\\logs\\pml",
+        "LoadConfig": "C:\\Tools\\Procmon\\profile.pmc"
+      },
+      "ETW": {
+        "Enable": true
+      },
+      "MemoryDump": {
+        "Mode": "Full",
+        "AllChildProcesses": true,
+        "MinLifetimeMs": 3000,
+        "MaxConcurrentDumps": 2,
+        "OutputDirectory": "D:\\agent\\dumps"
+      },
+      "Pcap": {
+        "Enable": true,
+        "RingSizeMB": 500,
+        "OutputDirectory": "D:\\agent\\pcap"
+      }
+    },
+    "VirusTotal": {
+      "ApiKey": "${VT_API_KEY}",
+      "AutoUpload": true,
+      "AutoUploadIfMissing": true,
+      "UploadIfNotFound": true,
+      "WaitForAnalysis": true,
+      "WaitForResults": true,
+      "MaxWaitTime": 300,
+      "MaxWaitMinutes": 10,
+      "RetryCount": 3,
+      "RetryDelay": 10,
+      "PollIntervalSec": 15,
+      "IncludeBehaviorReport": true,
+      "CacheResults": true,
+      "CacheDuration": 86400
+    },
+    "Analysis": {
+      "DefaultTimeout": 300,
+      "KillOnTimeout": true,
+      "MaxConcurrentAnalysis": 2,
+      "ScreenshotInterval": 5,
+      "NetworkCapture": {
+        "Enabled": true,
+        "CaptureFilter": "tcp or udp",
+        "MaxCaptureSize": 104857600,
+        "SavePCAP": true
+      },
+      "BehaviorDetection": {
+        "EnableYaraRules": true,
+        "YaraRulesPath": "C:\\Rules\\yara",
+        "EnableSigmaRules": true,
+        "SigmaRulesPath": "C:\\Rules\\sigma"
+      }
+    },
+    "Output": {
+      "PullFromGuest": [
+        "D:\\agent\\logs\\*.pml",
+        "D:\\agent\\logs\\*.csv",
+        "D:\\agent\\pcap\\*.pcap",
+        "D:\\agent\\dumps\\*.dmp",
+        "D:\\agent\\artifacts\\**\\*.*"
+      ],
+      "LocalDirectory": "C:\\MalwareAnalyzer\\Results",
+      "OutputDirectory": "C:\\PEAnalyzer\\Reports",
+      "ReportFormat": "html",
+      "DefaultFormat": "HTML",
+      "IncludeScreenshots": true,
+      "IncludeMemoryDumps": false,
+      "IncludePCAP": true,
+      "CompressReport": true,
+      "EmailNotification": {
+        "Enabled": false,
+        "SMTPServer": "smtp.example.com",
+        "From": "analyzer@example.com",
+        "To": [
+          "security@example.com"
+        ]
+      }
+    },
+    "Database": {
+      "Provider": "SQLite",
+      "ConnectionString": "Data Source=C:\\MalwareAnalyzer\\data\\malanalyzer.db",
+      "BatchInsertSize": 5000,
+      "EnableLogging": false,
+      "CommandTimeout": 30,
+      "RetentionDays": 90
+    },
+    "Perf": {
+      "MaxIngestDegreeOfParallelism": 4,
+      "CsvToDbBuffer": 104857600,
+      "Compression": "Zstd",
+      "EventSampling": {
+        "ApiCall": 1.0,
+        "FileOp": 1.0,
+        "Registry": 1.0,
+        "Network": 1.0
+      }
+    },
+    "Performance": {
+      "EnableCaching": true,
+      "CacheSize": 1073741824,
+      "ThreadPoolSize": 16,
+      "AsyncIOThreads": 8,
+      "EnableCompression": true,
+      "BufferSize": 65536,
+      "BatchInsertSize": 1000,
+      "EventQueueSize": 10000
+    },
+    "Logging": {
+      "Level": "Information",
+      "Metrics": {
+        "Enable": true,
+        "Prometheus": false
+      }
+    },
+    "Security": {
+      "EnableTLS": true,
+      "CertificatePath": "C:\\Certs\\analyzer.pfx",
+      "EncryptDatabase": true,
+      "EncryptMemoryDumps": true,
+      "SecureDelete": true,
+      "AuditLogging": true
+    }
+  },
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "System": "Warning"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "File",
+        "Args": {
+          "path": "C:\\PEAnalyzer\\Logs\\log-.txt",
+          "rollingInterval": "Day",
+          "retainedFileCountLimit": 30
+        }
+      }
+    ]
+  }
+}

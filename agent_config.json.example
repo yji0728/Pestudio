@@ -1,0 +1,34 @@
+{
+  "Agent": {
+    "WorkRoot": "D:\\agent",
+    "Procmon": {
+      "Path": "C:\\Tools\\Procmon\\Procmon64.exe",
+      "Args": "/AcceptEula /Quiet /BackingFile D:\\agent\\logs\\trace.pml /Minimized /LoadConfig C:\\Tools\\Procmon\\profile.pmc"
+    },
+    "Pcap": {
+      "Enable": true,
+      "Adapter": "BestMatch",
+      "RingSizeMB": 500,
+      "Output": "D:\\agent\\pcap\\capture.pcap"
+    },
+    "Dump": {
+      "Mode": "Full",
+      "AllChildren": true,
+      "DelayMsAfterStart": 5000,
+      "MaxConcurrent": 2,
+      "Output": "D:\\agent\\dumps"
+    },
+    "Artifacts": {
+      "WatchPaths": [
+        "C:\\Users\\Public\\*",
+        "C:\\Windows\\Temp\\*",
+        "C:\\ProgramData\\*"
+      ],
+      "Hash": "SHA256"
+    },
+    "Shutdown": {
+      "OnTimeout": "GracefulThenKill",
+      "GracePeriodSec": 10
+    }
+  }
+}

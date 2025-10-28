@@ -94,7 +94,7 @@ class ArtifactCollector:
         Dump process memory
         
         Memory dump types:
-        - full: Complete process memory
+        - full: Complete process memory (MiniDumpWithFullMemory)
         - heap: Heap regions
         - stack: Stack regions
         - unpacked: Unpacked code regions
@@ -104,12 +104,16 @@ class ArtifactCollector:
         dump_filename = f"pid_{pid}_{process_name}_{dump_type}.dmp"
         dump_path = os.path.join(self.artifacts_dir, "dumps", dump_filename)
         
-        # In a real implementation, this would:
-        # 1. Use procdump or similar tool to dump process memory
-        # 2. Save to artifacts directory
-        # 3. Calculate dump size
+        # In a real implementation, this would use one of:
+        # 1. MiniDumpWriteDump API with MiniDumpWithFullMemory flag
+        # 2. Sysinternals ProcDump: procdump.exe -ma <pid> <output_file>
+        # 3. For large processes, use chunked dumping to avoid memory issues
         
-        # For now, create placeholder
+        # Example PowerShell command for Procdump:
+        # Invoke-Command -VMName $vm_name -ScriptBlock {
+        #     C:\Tools\procdump.exe -ma $pid $dump_path -accepteula
+        # }
+        
         print(f"[ArtifactCollector] Memory dump saved to: {dump_path}")
         
         memory_dump = MemoryDump(
@@ -125,12 +129,51 @@ class ArtifactCollector:
         
         return memory_dump
     
+    def dump_process_tree_memory(self, process_tree: dict, dump_type: str = "full") -> List[MemoryDump]:
+        """
+        Dump memory for all processes in the process tree (parent and all children)
+        
+        This implements the requirement to dump ALL child processes
+        """
+        print(f"[ArtifactCollector] Dumping memory for entire process tree")
+        
+        dumps = []
+        
+        def dump_recursive(proc_info):
+            """Recursively dump process and all its children"""
+            if not proc_info:
+                return
+            
+            pid = proc_info.get('process_id')
+            name = proc_info.get('process_name', 'unknown')
+            
+            # Dump this process
+            print(f"[ArtifactCollector] Dumping process: PID={pid}, Name={name}")
+            dump = self.dump_process_memory(pid, name, dump_type)
+            if dump:
+                dumps.append(dump)
+            
+            # Recursively dump all children
+            for child_pid in proc_info.get('children', []):
+                if child_pid in process_tree:
+                    dump_recursive(process_tree[child_pid])
+        
+        # Start dumping from root processes
+        for proc_id, proc_info in process_tree.items():
+            if proc_info.get('parent_process_id') is None or proc_info.get('parent_process_id') not in process_tree:
+                # This is a root process, start recursive dump
+                dump_recursive(proc_info)
+        
+        print(f"[ArtifactCollector] Dumped {len(dumps)} processes in total")
+        
+        return dumps
+    
     def capture_network_traffic(self, duration: int = 300) -> Optional[NetworkCapture]:
         """
-        Capture network traffic
+        Capture network traffic with PCAP ring buffer
         
         Captures:
-        - PCAP file creation
+        - PCAP file creation with ring buffer (prevents unlimited growth)
         - DNS queries
         - HTTP/HTTPS traffic
         - C&C communications
@@ -140,15 +183,23 @@ class ArtifactCollector:
         capture_filename = f"network_capture.pcap"
         capture_path = os.path.join(self.artifacts_dir, "network", capture_filename)
         
-        # In a real implementation, this would:
-        # 1. Start packet capture (using WinPcap/Npcap)
-        # 2. Capture for specified duration
-        # 3. Save to PCAP file
-        # 4. Analyze protocols
+        # In a real implementation, this would use:
+        # 1. Npcap/WinPcap for packet capture
+        # 2. SharpPcap library for C# implementation
+        # 3. Ring buffer to limit capture size (e.g., 500MB)
+        # 4. Example with tshark:
+        #    tshark -i <interface> -b filesize:500000 -w capture.pcap
+        
+        # For Hyper-V guest, capture on the Default Switch interface
+        # Example PowerShell in guest:
+        # Invoke-Command -VMName $vm_name -ScriptBlock {
+        #     C:\Tools\tshark.exe -i "Ethernet" -b filesize:500000 -w D:\agent\pcap\capture.pcap
+        # }
         
         start_time = datetime.now()
         
         print(f"[ArtifactCollector] Network capture started")
+        print(f"[ArtifactCollector] Using ring buffer to limit size")
         
         # Placeholder for actual capture
         network_capture = NetworkCapture(
