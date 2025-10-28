@@ -203,30 +203,79 @@ class VirusTotalClient:
             print(f"[VTClient] Error getting submission status: {str(e)}")
             return None
     
-    def wait_for_analysis(self, submission_id: str, timeout: int = 300) -> bool:
+    def check_and_upload_if_missing(self, file_path: str, wait_for_results: bool = True, max_wait_time: int = 300) -> Optional[VTReport]:
         """
-        Wait for analysis to complete
+        Check if file exists in VirusTotal, upload if not found, and optionally wait for results
+        
+        This implements the auto-upload functionality required in the specs.
         
         Args:
-            submission_id: Submission ID to monitor
-            timeout: Maximum time to wait in seconds
+            file_path: Path to file to check/upload
+            wait_for_results: Whether to wait for analysis to complete
+            max_wait_time: Maximum time to wait for analysis (seconds)
+            
+        Returns:
+            VTReport if available, None otherwise
         """
-        print(f"[VTClient] Waiting for analysis to complete: {submission_id}")
+        print(f"[VTClient] Checking file in VirusTotal: {file_path}")
         
-        start_time = time.time()
+        # Calculate file hash
+        file_hash = self._calculate_file_hash(file_path)
+        print(f"[VTClient] File hash: {file_hash}")
         
-        while time.time() - start_time < timeout:
-            status = self.get_submission_status(submission_id)
+        # Check if file exists in VT
+        existing_report = self.get_file_report(file_hash)
+        
+        if existing_report:
+            print(f"[VTClient] File found in VirusTotal")
+            print(f"[VTClient] Detection ratio: {existing_report.detection_ratio}")
+            return existing_report
+        
+        # File not found, upload it
+        print(f"[VTClient] File not found in VirusTotal, uploading...")
+        submission = self.submit_file(file_path)
+        
+        if not submission:
+            print(f"[VTClient] Failed to upload file")
+            return None
+        
+        print(f"[VTClient] File uploaded successfully, submission ID: {submission.submission_id}")
+        
+        # Wait for analysis if requested
+        if wait_for_results:
+            print(f"[VTClient] Waiting for analysis to complete (max {max_wait_time}s)...")
+            if self.wait_for_analysis(submission.submission_id, max_wait_time):
+                # Get the analysis report
+                report = self.get_file_report(file_hash)
+                if report:
+                    print(f"[VTClient] Analysis complete, detection ratio: {report.detection_ratio}")
+                    return report
+            else:
+                print(f"[VTClient] Analysis timeout, results may not be complete")
+        
+        return None
+    
+    def get_cached_report(self, file_hash: str, cache_duration: int = 86400) -> Optional[VTReport]:
+        """
+        Get report from cache if available and not expired
+        
+        Args:
+            file_hash: SHA256 hash of file
+            cache_duration: Cache validity duration in seconds (default: 24 hours)
             
-            if status == "completed":
-                print(f"[VTClient] Analysis completed")
-                return True
-            
-            print(f"[VTClient] Status: {status}, waiting...")
-            time.sleep(self.rate_limit_delay)
+        Returns:
+            Cached VTReport if available and valid, None otherwise
+        """
+        # In a real implementation, this would:
+        # 1. Check local cache (file or memory)
+        # 2. Verify cache is not expired
+        # 3. Return cached report if valid
+        # 4. Otherwise, fetch new report from VT API
         
-        print(f"[VTClient] Analysis timeout after {timeout} seconds")
-        return False
+        print(f"[VTClient] Checking cache for: {file_hash}")
+        
+        # For now, just fetch from API
+        return self.get_file_report(file_hash)
     
     def _calculate_file_hash(self, file_path: str) -> str:
         """Calculate SHA256 hash of file"""
