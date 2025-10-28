@@ -1,0 +1,30 @@
+# Example configuration file for MalwareAnalyzer Pro
+
+sandbox:
+  type: virtualbox
+  vm_name: "Windows10_Sandbox"
+  snapshot: "clean_state"
+  memory: 4096
+  cpu_cores: 2
+  
+monitoring:
+  api_hooks: true
+  network_capture: true
+  screenshot_interval: 5
+  memory_dump: true
+  
+analysis:
+  timeout: 300
+  kill_on_timeout: true
+  collect_artifacts: true
+  
+virustotal:
+  api_key: "YOUR_API_KEY_HERE"
+  auto_submit: true
+  wait_for_results: true
+  
+output:
+  directory: "./reports"
+  format: "json"
+  include_pcap: true
+  include_memory_dump: false
