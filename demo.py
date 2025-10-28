@@ -8,6 +8,9 @@ import os
 import sys
 import tempfile
 
+# Add src directory to path once
+sys.path.insert(0, 'src')
+
 # Create a simple test file (not a real PE file, just for demo)
 def create_test_file():
     """Create a test file for demonstration"""
@@ -33,7 +36,6 @@ def demo_pe_validation():
     print("DEMO 1: PE File Validation")
     print("="*70)
     
-    sys.path.insert(0, 'src')
     from malanalyzer.validators import PEFileValidator
     
     # Create test file
@@ -65,7 +67,6 @@ def demo_sandbox_config():
     print("DEMO 2: Sandbox Configuration")
     print("="*70)
     
-    sys.path.insert(0, 'src')
     from malanalyzer.sandbox import SandboxManager, SandboxConfig, VMType
     
     config = SandboxConfig(
@@ -99,7 +100,6 @@ def demo_process_monitor():
     print("DEMO 3: Process Monitoring")
     print("="*70)
     
-    sys.path.insert(0, 'src')
     from malanalyzer.monitoring import ProcessMonitor
     import time
     
@@ -135,7 +135,6 @@ def demo_artifact_collector():
     print("DEMO 4: Artifact Collection")
     print("="*70)
     
-    sys.path.insert(0, 'src')
     from malanalyzer.collectors import ArtifactCollector
     import shutil
     
@@ -170,7 +169,6 @@ def demo_virustotal():
     print("DEMO 5: VirusTotal Integration")
     print("="*70)
     
-    sys.path.insert(0, 'src')
     from malanalyzer.api import VirusTotalClient
     
     # Create client (with dummy API key for demo)
@@ -193,12 +191,10 @@ def demo_database():
     print("DEMO 6: Database Storage")
     print("="*70)
     
-    sys.path.insert(0, 'src')
     from malanalyzer.storage import init_database
-    import os
     
-    # Create database
-    db_path = "/tmp/demo_malanalyzer.db"
+    # Create database in temp directory for cross-platform compatibility
+    db_path = os.path.join(tempfile.gettempdir(), "demo_malanalyzer.db")
     if os.path.exists(db_path):
         os.remove(db_path)
     
@@ -237,7 +233,6 @@ def demo_config():
     print("DEMO 7: Configuration Management")
     print("="*70)
     
-    sys.path.insert(0, 'src')
     from malanalyzer.config import load_config, create_default_config
     
     print(f"\nDefault Configuration:")
